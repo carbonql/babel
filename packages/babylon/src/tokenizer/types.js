@@ -190,6 +190,12 @@ export const keywords = {
   typeof: new KeywordTokenType("typeof", { beforeExpr, prefix, startsExpr }),
   void: new KeywordTokenType("void", { beforeExpr, prefix, startsExpr }),
   delete: new KeywordTokenType("delete", { beforeExpr, prefix, startsExpr }),
+
+  // LINQ keywords.
+  FROM: new KeywordTokenType("FROM"),
+  IN: new KeywordTokenType("IN"),
+  WHERE: new KeywordTokenType("WHERE"),
+  SELECT: new KeywordTokenType("SELECT"),
 };
 
 // Map keyword names to token types.

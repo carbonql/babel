@@ -862,9 +862,86 @@ export default class ExpressionParser extends LValParser {
         }
       }
 
+      case tt._FROM: {
+        node = this.startNode();
+        this.next();
+
+        node.item = this.parseIdentifier();
+
+        if (this.state.type !== tt._IN) {
+          throw this.unexpected(
+            null,
+            "Form of query: FROM {identifier} IN {expr}",
+          );
+        }
+        this.next();
+
+        // TODO: Move to full-blown expression.
+        node.collection = this.parseIdentifier();
+
+        node.clauses = this.parseQueryExpression();
+
+        return this.finishNode(node, "FromExpression");
+      }
+
       default:
         throw this.unexpected();
     }
+  }
+
+  parseQueryExpression(): any {
+    let lastType = null;
+    const clauses = [];
+    let shouldContinue = true;
+    for (;;) {
+      switch (this.state.type) {
+        case tt._SELECT: {
+          lastType = this.state.type;
+          const node = this.startNode();
+          this.next();
+
+          node.body = this.parseMaybeAssign();
+          clauses.push(this.finishNode(node, "SelectExpression"));
+          break;
+        }
+
+        case tt._WHERE: {
+          lastType = this.state.type;
+          const node = this.startNode();
+          this.next();
+
+          node.body = this.parseMaybeAssign();
+          clauses.push(this.finishNode(node, "WhereExpression"));
+          break;
+        }
+
+        default:
+          shouldContinue = false;
+          break;
+      }
+
+      if (!shouldContinue) {
+        break;
+      }
+    }
+
+    if (clauses.length < 1) {
+      throw this.unexpected(
+        null,
+        "There must be at least one clause in a query expression, such as a SELECT",
+      );
+    }
+
+    if (lastType !== tt._SELECT) {
+      throw this.unexpected(
+        null,
+        "Last clause in a query expression must be a SELECT",
+      );
+    }
+
+    this.next();
+
+    return clauses;
   }
 
   parseBooleanLiteral(): N.BooleanLiteral {
